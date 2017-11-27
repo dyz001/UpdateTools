@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Config>
+  <DBParam server="60.205.176.169" uid="root" pwd="123abcF$" database="oceandb" port="3306" CharSet="utf8">    
+  </DBParam>
+</Config>
