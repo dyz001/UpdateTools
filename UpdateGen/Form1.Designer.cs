@@ -55,6 +55,8 @@
             this.btn_open_res = new System.Windows.Forms.Button();
             this.btn_open_conf = new System.Windows.Forms.Button();
             this.lbl_declare = new System.Windows.Forms.Label();
+            this.lbl_core_ver = new System.Windows.Forms.Label();
+            this.txt_core_ver = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // lbl_product
@@ -73,6 +75,7 @@
             this.cmb_product.Name = "cmb_product";
             this.cmb_product.Size = new System.Drawing.Size(121, 20);
             this.cmb_product.TabIndex = 1;
+            this.cmb_product.SelectedIndexChanged += new System.EventHandler(this.cmb_product_SelectedIndexChanged);
             // 
             // cb_compile_code
             // 
@@ -134,6 +137,7 @@
             this.btn_sel_proj.TabIndex = 8;
             this.btn_sel_proj.Text = "选择";
             this.btn_sel_proj.UseVisualStyleBackColor = true;
+            this.btn_sel_proj.Click += new System.EventHandler(this.btn_sel_proj_Click);
             // 
             // lbl_res_dir
             // 
@@ -159,6 +163,7 @@
             this.btn_sel_res_dir.TabIndex = 11;
             this.btn_sel_res_dir.Text = "选择";
             this.btn_sel_res_dir.UseVisualStyleBackColor = true;
+            this.btn_sel_res_dir.Click += new System.EventHandler(this.btn_sel_res_dir_Click);
             // 
             // btn_sel_hotupdate
             // 
@@ -168,6 +173,7 @@
             this.btn_sel_hotupdate.TabIndex = 14;
             this.btn_sel_hotupdate.Text = "选择";
             this.btn_sel_hotupdate.UseVisualStyleBackColor = true;
+            this.btn_sel_hotupdate.Click += new System.EventHandler(this.btn_sel_hotupdate_Click);
             // 
             // txt_hotupdate_conf
             // 
@@ -241,12 +247,14 @@
             this.btn_save_ver.TabIndex = 21;
             this.btn_save_ver.Text = "保存配置";
             this.btn_save_ver.UseVisualStyleBackColor = true;
+            this.btn_save_ver.Click += new System.EventHandler(this.btn_save_ver_Click);
             // 
             // txt_log
             // 
             this.txt_log.Location = new System.Drawing.Point(13, 236);
             this.txt_log.Multiline = true;
             this.txt_log.Name = "txt_log";
+            this.txt_log.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txt_log.Size = new System.Drawing.Size(471, 330);
             this.txt_log.TabIndex = 22;
             // 
@@ -289,11 +297,29 @@
             this.lbl_declare.TabIndex = 26;
             this.lbl_declare.Text = "designed by dou ";
             // 
+            // lbl_core_ver
+            // 
+            this.lbl_core_ver.AutoSize = true;
+            this.lbl_core_ver.Location = new System.Drawing.Point(335, 11);
+            this.lbl_core_ver.Name = "lbl_core_ver";
+            this.lbl_core_ver.Size = new System.Drawing.Size(77, 12);
+            this.lbl_core_ver.TabIndex = 27;
+            this.lbl_core_ver.Text = "核心版本号：";
+            // 
+            // txt_core_ver
+            // 
+            this.txt_core_ver.Location = new System.Drawing.Point(427, 6);
+            this.txt_core_ver.Name = "txt_core_ver";
+            this.txt_core_ver.Size = new System.Drawing.Size(100, 21);
+            this.txt_core_ver.TabIndex = 28;
+            // 
             // FormUpdate
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 12F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(601, 592);
+            this.Controls.Add(this.txt_core_ver);
+            this.Controls.Add(this.lbl_core_ver);
             this.Controls.Add(this.lbl_declare);
             this.Controls.Add(this.btn_open_conf);
             this.Controls.Add(this.btn_open_res);
@@ -323,6 +349,7 @@
             this.Controls.Add(this.lbl_product);
             this.MaximizeBox = false;
             this.Name = "FormUpdate";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "棋牌更新工具";
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -358,6 +385,8 @@
         private System.Windows.Forms.Button btn_open_res;
         private System.Windows.Forms.Button btn_open_conf;
         private System.Windows.Forms.Label lbl_declare;
+        private System.Windows.Forms.Label lbl_core_ver;
+        private System.Windows.Forms.TextBox txt_core_ver;
     }
 }
 

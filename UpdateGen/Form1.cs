@@ -18,6 +18,7 @@ namespace UpdateGen
     {
         protected Task<bool> copy_task;
         protected Task<bool> gen_md5_task;
+        protected Task<string> out_package_task;
         protected StringBuilder m_log = new StringBuilder();
         protected Process proc_compile = new Process();
         delegate void AppendLogCallback(string log);
@@ -29,11 +30,19 @@ namespace UpdateGen
             {
                 instance = this;
             }
+            lbl_declare.Text += Config.getVersion();
+            cb_compile_code.Checked = true;
+            loadConfig();
         }
 
         protected void loadConfig()
         {
-
+            Config.LoadConfigFile();
+            Dictionary<String, Config.Product>.KeyCollection keyCollections = Config.GetProductKeys();
+            foreach(string s in keyCollections)
+            {
+                cmb_product.Items.Add(s);
+            }
         }
 
         public static FormUpdate GetInstance()
@@ -43,11 +52,21 @@ namespace UpdateGen
 
         private void btn_sel_bk_dir_Click(object sender, EventArgs e)
         {
-
+            FolderBrowserDialog P_File_Folder = new FolderBrowserDialog();
+            if(!String.IsNullOrEmpty(txt_bk_dir.Text))
+            {
+                P_File_Folder.SelectedPath = txt_bk_dir.Text;
+            }
+            DialogResult result = P_File_Folder.ShowDialog();
+            if(result == System.Windows.Forms.DialogResult.OK)
+            {
+                txt_bk_dir.Text = P_File_Folder.SelectedPath;
+            }
         }
 
         private void btn_diff_gen_Click(object sender, EventArgs e)
         {
+            Config.LoadUpdateConfig(txt_hotupdate_conf.Text);
             //拷贝资源到目标目录
             copy_task = new Task<bool>(n => CopyResSrc((FormUpdate)n), this);
             copy_task.Start();
@@ -55,6 +74,27 @@ namespace UpdateGen
                 {
                     return GenMd5(this);
                 });
+            if (!string.IsNullOrEmpty(txt_online_ver.Text))
+            {
+                //输出版本差异
+                out_package_task = gen_md5_task.ContinueWith(task =>
+                {
+                    return OutPackage(this);
+                });
+                out_package_task.ContinueWith(task =>
+                {
+                    string file_path = out_package_task.Result;
+                    string res_md5 = Utils.GetMd5(file_path);
+                    string file_name = file_path.Substring(file_path.LastIndexOf(Path.DirectorySeparatorChar) + 1);
+                    Config.UpdateConfigItem(res_md5, file_name, Config.getResKeyPre() + this.GetOutVer(), this.GetOutVer(), this.getCoreVersion());
+                    Config.saveUpdateConfig();
+                });
+            }
+        }
+
+        public String getCoreVersion()
+        {
+            return txt_core_ver.Text;
         }
 
         public String getProjectDir()
@@ -64,7 +104,12 @@ namespace UpdateGen
 
         public String getBKDir()
         {
-            return Path.Combine(txt_bk_dir.Text, txt_product_name.Text + txt_out_ver.Text);
+            return Path.Combine(txt_bk_dir.Text, txt_product_name.Text + "_" + txt_out_ver.Text);
+        }
+
+        public String getBaseDir()
+        {
+            return Path.Combine(txt_bk_dir.Text, txt_product_name.Text + "_" + txt_online_ver.Text);
         }
 
         public bool isCompileSource()
@@ -95,16 +140,32 @@ namespace UpdateGen
         protected static bool GenMd5(FormUpdate update_form)
         {
             bool ret = true;
-            if(!File.Exists(Config.getMd5File()))
+            FileStream fs;
+            string md5File = Path.Combine(update_form.getBKDir(), Config.getMd5File());
+            if (!File.Exists(md5File))
             {
-                File.Create(Config.getMd5File());
+                fs = File.Create(md5File);
             }
-            StreamWriter sw = new StreamWriter(Config.getMd5File());
+            else
+            {
+                fs = new FileStream(md5File, FileMode.Truncate);
+            }
+            StreamWriter sw = new StreamWriter(fs);
             Utils.GenResMd5(update_form.getBKDir(), sw, update_form.getBKDir());
+            sw.Flush();
+            sw.Close();
             return ret;
         }
 
-        
+        public string GetOutVer()
+        {
+            return txt_out_ver.Text;
+        }
+
+        protected static string OutPackage(FormUpdate update_form)
+        {
+            return Utils.OutDiff(update_form.getBaseDir(), update_form.getBKDir(), update_form.getPackageOutDir(), update_form.GetOutVer());
+        }        
 
         public void RunProgram(string programName, string cmd)
         {
@@ -141,7 +202,7 @@ namespace UpdateGen
 
         public string getPackageOutDir()
         {
-            return "";
+            return txt_res_dir.Text;
         }
 
         private void btn_open_res_Click(object sender, EventArgs e)
@@ -156,7 +217,74 @@ namespace UpdateGen
         
         public string getConfigDir()
         {
-            return "";
+            return txt_hotupdate_conf.Text;
+        }
+
+        private void cmb_product_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            string product_name = cmb_product.SelectedItem.ToString();
+            Config.Product product = Config.GetProductByName(product_name);
+            txt_hotupdate_conf.Text = product.UpdateConfDir;
+            txt_bk_dir.Text = product.BackDir;
+            txt_online_ver.Text = product.BaseVer;
+            txt_product_name.Text = product_name;
+            txt_proj_dir.Text = product.ProjectDir;
+            txt_res_dir.Text = product.ResourceDir;
+        }
+
+        private void btn_sel_proj_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog P_File_Folder = new FolderBrowserDialog();
+            if (!String.IsNullOrEmpty(txt_bk_dir.Text))
+            {
+                P_File_Folder.SelectedPath = txt_proj_dir.Text;
+            }
+            DialogResult result = P_File_Folder.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                txt_proj_dir.Text = P_File_Folder.SelectedPath;
+            }
+        }
+
+        private void btn_sel_res_dir_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog P_File_Folder = new FolderBrowserDialog();
+            if (!String.IsNullOrEmpty(txt_bk_dir.Text))
+            {
+                P_File_Folder.SelectedPath = txt_res_dir.Text;
+            }
+            DialogResult result = P_File_Folder.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                txt_res_dir.Text = P_File_Folder.SelectedPath;
+            }
+        }
+
+        private void btn_sel_hotupdate_Click(object sender, EventArgs e)
+        {
+            FolderBrowserDialog P_File_Folder = new FolderBrowserDialog();
+            if (!String.IsNullOrEmpty(txt_bk_dir.Text))
+            {
+                P_File_Folder.SelectedPath = txt_hotupdate_conf.Text;
+            }
+            DialogResult result = P_File_Folder.ShowDialog();
+            if (result == System.Windows.Forms.DialogResult.OK)
+            {
+                txt_hotupdate_conf.Text = P_File_Folder.SelectedPath;
+            }
+        }
+
+        private void btn_save_ver_Click(object sender, EventArgs e)
+        {
+            Config.Product product = new Config.Product();
+            product.ProductName = txt_product_name.Text;
+            product.ProjectDir = txt_proj_dir.Text;
+            product.ResourceDir = txt_res_dir.Text;
+            product.UpdateConfDir = txt_hotupdate_conf.Text;
+            product.BackDir = txt_bk_dir.Text;
+            product.BaseVer = txt_online_ver.Text;
+            Config.AddProduct(product);
+            Config.SaveToFile();
         }
     }
 }

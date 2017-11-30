@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using ICSharpCode.SharpZipLib.Zip;
+using Newtonsoft.Json;
 
 namespace UpdateGen
 {
@@ -38,6 +39,7 @@ namespace UpdateGen
                 while (line != null)
                 {
                     Log(line);
+                    line = proc_test.StandardOutput.ReadLine();
                 }
                 proc_test.Close();
             }
@@ -65,13 +67,13 @@ namespace UpdateGen
 
             foreach(String path in file_paths)
             {
-                String target_path = Path.Combine(target_dir, path.Substring(path.LastIndexOf(Path.PathSeparator) + 1));
+                String target_path = Path.Combine(target_dir, path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1));
                 if (File.Exists(target_path))
                 {
                     Log("Target File Exist, jump file:" + target_path);
                     continue;
                 }
-                File.Copy(path, Path.Combine(target_dir, path.Substring(path.LastIndexOf(Path.PathSeparator) + 1)));
+                File.Copy(path, Path.Combine(target_dir, path.Substring(path.LastIndexOf(Path.DirectorySeparatorChar) + 1)));
             }
 
             String[] dir_infos = Directory.GetDirectories(src_dir);
@@ -87,17 +89,20 @@ namespace UpdateGen
             String[] directories = Directory.GetDirectories(package_dir);
 
             String[] files = Directory.GetFiles(package_dir);
-            foreach(String source in files)
+            if (package_dir != parent)
             {
-                MD5 md5 = MD5.Create();
-                byte[] result = md5.ComputeHash(File.ReadAllBytes(source));
-                StringBuilder strbul = new StringBuilder(40);
-                for (int i = 0; i < result.Length; i++)
+                foreach (String source in files)
                 {
-                    strbul.Append(result[i].ToString("x2"));//加密结果"x2"结果为32位,"x3"结果为48位,"x4"结果为64位
+                    MD5 md5 = MD5.Create();
+                    byte[] result = md5.ComputeHash(File.ReadAllBytes(source));
+                    StringBuilder strbul = new StringBuilder(40);
+                    for (int i = 0; i < result.Length; i++)
+                    {
+                        strbul.Append(result[i].ToString("x2"));//加密结果"x2"结果为32位,"x3"结果为48位,"x4"结果为64位
 
+                    }
+                    md5_out_file.WriteLine(source.Substring(source.IndexOf(parent) + parent.Length + 1) + ":" + strbul.ToString());
                 }
-                md5_out_file.WriteLine(source.Substring(source.IndexOf(parent) + parent.Length + 1) + ":" + strbul.ToString());
             }
 
             foreach(String dir in directories)
@@ -106,15 +111,32 @@ namespace UpdateGen
             }
         }
 
-        public static void OutDiff(string base_dir, string cur_dir, string package_out_dir, string ver)
+        public static string GetMd5(string file_path)
+        {
+            if(!File.Exists(file_path))
+            {
+                return null;
+            }
+            MD5 md5 = MD5.Create();
+            byte[] result = md5.ComputeHash(File.ReadAllBytes(file_path));
+            StringBuilder strbul = new StringBuilder(40);
+            for (int i = 0; i < result.Length; i++)
+            {
+                strbul.Append(result[i].ToString("x2"));//加密结果"x2"结果为32位,"x3"结果为48位,"x4"结果为64位
+
+            }
+            return strbul.ToString();
+        }
+
+        public static string OutDiff(string base_dir, string cur_dir, string package_out_dir, string ver)
         {
             string base_md5_file = Path.Combine(base_dir, Config.getMd5File());
             string cur_md5_file = Path.Combine(cur_dir, Config.getMd5File());
             if(!File.Exists(base_md5_file))
             {
                 FormUpdate.GetInstance().appendLog("base md5 not found, begin gen");
-                File.Create(base_md5_file);
-                StreamWriter sw = new StreamWriter(base_md5_file);
+                FileStream fs = File.Create(base_md5_file);
+                StreamWriter sw = new StreamWriter(fs);
                 GenResMd5(base_dir, sw, base_dir);
                 sw.Close();
             }
@@ -122,8 +144,8 @@ namespace UpdateGen
             if (!File.Exists(cur_md5_file))
             {
                 FormUpdate.GetInstance().appendLog("base md5 not found, begin gen");
-                File.Create(cur_md5_file);
-                StreamWriter sw = new StreamWriter(cur_md5_file);
+                FileStream fs = File.Create(cur_md5_file);
+                StreamWriter sw = new StreamWriter(fs);
                 GenResMd5(cur_md5_file, sw, cur_dir);
                 sw.Close();
             }
@@ -164,14 +186,14 @@ namespace UpdateGen
                 {
                     diff_dic.Add(key, cur_md5_dic[key]);
                 }
-                if(base_md5_dic[key].CompareTo(cur_md5_dic[key]) != 0)
+                else if(base_md5_dic[key].CompareTo(cur_md5_dic[key]) != 0)
                 {
                     diff_dic.Add(key, cur_md5_dic[key]);
                 }
             }
 
             //copy to package out
-            string tmpDir = Path.Combine(package_out_dir.Substring(0, package_out_dir.LastIndexOf(Path.PathSeparator)), "temp");
+            string tmpDir = Path.Combine(package_out_dir.Substring(0, package_out_dir.LastIndexOf(Path.DirectorySeparatorChar)), "temp");
             if(Directory.Exists(tmpDir))
             {
                 Directory.Delete(tmpDir, true);
@@ -180,16 +202,34 @@ namespace UpdateGen
 
             foreach(String key in diff_dic.Keys)
             {
+                string dir = key.Substring(0, key.LastIndexOf(Path.DirectorySeparatorChar));
+                dir = Path.Combine(tmpDir, dir);
+                if(!Directory.Exists(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
                 File.Copy(Path.Combine(cur_dir, key), Path.Combine(tmpDir, key));
             }
 
             FastZip zip = new FastZip();
-            zip.CreateZip(Path.Combine(package_out_dir, "update_" + ver + ".zip"), tmpDir, true, "");
+            string zip_file_path = Path.Combine(package_out_dir, "update_" + ver + ".zip");
+            zip.CreateZip(zip_file_path, tmpDir, true, "");
+            return zip_file_path;
         }
 
         public static void Log(String s)
         {
             FormUpdate.GetInstance().appendLog(s + "\r\n");
+        }
+
+        public static string SerializeObject(object obj)
+        {
+            return JsonConvert.SerializeObject(obj, Formatting.Indented);
+        }
+
+        public static T DeserializeObject<T>(string param)
+        {
+            return JsonConvert.DeserializeObject<T>(param);
         }
     }
 }

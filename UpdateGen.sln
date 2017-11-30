@@ -5,8 +5,6 @@ VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UpdateGen", "UpdateGen\UpdateGen.csproj", "{4EEBF1F2-7758-4AEA-A8CE-B7721ABB38FE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SharpZipLib", "SharpZipLib\SharpZipLib.csproj", "{AFB3B9BB-3154-4FB0-AD9F-32ED997526A3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -17,10 +15,6 @@ Global
 		{4EEBF1F2-7758-4AEA-A8CE-B7721ABB38FE}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4EEBF1F2-7758-4AEA-A8CE-B7721ABB38FE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4EEBF1F2-7758-4AEA-A8CE-B7721ABB38FE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{AFB3B9BB-3154-4FB0-AD9F-32ED997526A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{AFB3B9BB-3154-4FB0-AD9F-32ED997526A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{AFB3B9BB-3154-4FB0-AD9F-32ED997526A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{AFB3B9BB-3154-4FB0-AD9F-32ED997526A3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
