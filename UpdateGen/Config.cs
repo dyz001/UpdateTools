@@ -150,6 +150,7 @@ namespace UpdateGen
         /// <returns></returns>
         public static int UpdateConfigItem(string resMd5, string path, string resName, string version_no, string core_version)
         {
+            FormUpdate.GetInstance().appendLog("save config " + path + ", version_no:" + version_no);
             int default_group = 1;
             foreach(string key in androidConfig.groupVersions.Keys)
             {
@@ -166,23 +167,47 @@ namespace UpdateGen
             resConf.path = path;
 
             //android update
+            FormUpdate.GetInstance().appendLog("android update");
             androidConfig.groupVersions.Add(default_group.ToString(), version_no);
-            androidConfig.version = core_version;
+            androidConfig.version = String.IsNullOrEmpty(core_version) ? androidConfig.version : core_version;
             androidDetail.assets.Clear();
             androidDetail.assets.Add(resName, resConf);
-            androidDetail.groupVersions.Add(default_group.ToString(), version_no);
+            if (androidDetail.groupVersions.ContainsKey(default_group.ToString()))
+            {
+                FormUpdate.GetInstance().appendLog("android detail version error, key exist:" + default_group);
+            }
+            else
+            {
+                androidDetail.groupVersions.Add(default_group.ToString(), version_no);
+            }
 
             //ios update
-            iosConfig.groupVersions.Add(default_group.ToString(), version_no);
-            iosConfig.version = core_version;
+            FormUpdate.GetInstance().appendLog("ios update");
+            if (iosConfig.groupVersions.ContainsKey(default_group.ToString()))
+            {
+                FormUpdate.GetInstance().appendLog("key exist in ios:" + default_group.ToString() + "\r\n");
+            }
+            else
+            {
+                iosConfig.groupVersions.Add(default_group.ToString(), version_no);
+            }
+            iosConfig.version = String.IsNullOrEmpty(core_version) ? androidConfig.version : core_version;
             iosDetail.assets.Clear();
             iosDetail.assets.Add(resName, resConf);
-            iosDetail.groupVersions.Add(default_group.ToString(), version_no);
+            if (!iosDetail.groupVersions.ContainsKey(default_group.ToString()))
+            {
+                iosDetail.groupVersions.Add(default_group.ToString(), version_no);
+            }
+            else
+            {
+                FormUpdate.GetInstance().appendLog("ios detail info error, key exist:" + default_group);
+            }
             return default_group;
         }
 
         public static void saveUpdateConfig()
-        {   
+        {
+            FormUpdate.GetInstance().appendLog("saveUpdateConfig:" + Utils.SerializeObject(androidConfig));
             if(!string.IsNullOrEmpty(androidConfigPath))
             {
                 File.WriteAllText(androidConfigPath, Utils.SerializeObject(androidConfig));

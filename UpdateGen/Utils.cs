@@ -211,9 +211,59 @@ namespace UpdateGen
                 File.Copy(Path.Combine(cur_dir, key), Path.Combine(tmpDir, key));
             }
 
-            FastZip zip = new FastZip();
+            string[] dires =  Directory.GetDirectories(tmpDir);
+            List<string> directories = new List<string>();
+            directories.AddRange(dires);
             string zip_file_path = Path.Combine(package_out_dir, "update_" + ver + ".zip");
-            zip.CreateZip(zip_file_path, tmpDir, true, "");
+
+
+            using (ZipOutputStream ZipStream = new ZipOutputStream(System.IO.File.Create(zip_file_path)))
+            {
+                ZipStream.SetLevel(9);
+                ZipEntryFactory factory = new ZipEntryFactory();
+                while (directories.Count > 0)
+                {
+                    List<string> tmp = new List<string>();
+                    foreach (string dir in directories)
+                    {
+                        string[] dirs = Directory.GetDirectories(dir);
+                        if (dirs.Length > 0)
+                            tmp.AddRange(dirs);
+                    }
+                    //add files to zip
+                    foreach (string dir_tmp in directories)
+                    {
+                        string virtualDirectory = dir_tmp.Replace(tmpDir, string.Empty);
+                        Log("add virtual dir:" + virtualDirectory);
+                        ZipEntry zipEntry = factory.MakeDirectoryEntry(virtualDirectory);
+                        zipEntry.DateTime = DateTime.Now;
+                        ZipStream.PutNextEntry(zipEntry);
+                        string[] files_tmp = Directory.GetFiles(dir_tmp);
+                        foreach (string file_path in files_tmp)
+                        {
+                            string entry_name = file_path.Replace(tmpDir, string.Empty);
+                            ZipEntry entry = factory.MakeFileEntry(entry_name);
+                            entry.DateTime = DateTime.Now;
+                            ZipStream.PutNextEntry(entry);
+                            byte[] buffer = new byte[10240];
+                            using (FileStream fs = System.IO.File.OpenRead(file_path))
+                            {
+                                int sourceBytes;
+                                do
+                                {
+                                    sourceBytes = fs.Read(buffer, 0, buffer.Length);
+                                    ZipStream.Write(buffer, 0, sourceBytes);
+                                } while (sourceBytes > 0);
+                            }
+                        }
+                    }
+                    directories = tmp;
+                }
+                ZipStream.Finish();
+                ZipStream.Close();
+            }
+            //FastZip zip = new FastZip();
+            //zip.CreateZip(zip_file_path, tmpDir, true, "");
             return zip_file_path;
         }
 

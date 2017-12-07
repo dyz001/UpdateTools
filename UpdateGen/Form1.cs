@@ -127,6 +127,8 @@ namespace UpdateGen
             else
             {
                 this.txt_log.Text += log;
+                this.txt_log.SelectionStart = this.txt_log.Text.Length;
+                this.txt_log.ScrollToCaret();
             }
         }
 
