@@ -180,6 +180,7 @@ namespace UpdateGen
             {
                 androidDetail.groupVersions.Add(default_group.ToString(), version_no);
             }
+            androidDetail.version = String.IsNullOrEmpty(core_version) ? androidConfig.version : core_version;
 
             //ios update
             FormUpdate.GetInstance().appendLog("ios update");
@@ -202,6 +203,7 @@ namespace UpdateGen
             {
                 FormUpdate.GetInstance().appendLog("ios detail info error, key exist:" + default_group);
             }
+            iosDetail.version = String.IsNullOrEmpty(core_version) ? androidConfig.version : core_version;
             return default_group;
         }
 
